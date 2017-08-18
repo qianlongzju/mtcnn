@@ -1,1 +1,5 @@
 *.pyc
+prepare_data/pnet/
+prepare_data/rnet/
+prepare_data/onet/
+data

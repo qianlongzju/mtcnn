@@ -4,6 +4,7 @@ import time
 
 #wider face original images path
 path_to_image = '/home/seanlx/Dataset/wider_face/WIDER_train/images'
+path_to_image = '/Users/isaiah/Documents/face/WIDER_train/images'
 
 #matlab file path
 file_to_label = './wider_face_train.mat'

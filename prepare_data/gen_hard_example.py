@@ -15,22 +15,21 @@ from core.MtcnnDetector import MtcnnDetector
 from utils import *
 
 def save_hard_example(net):
+    if net == "rnet":
+        image_size = 24
+    if net == "onet":
+        image_size = 48
 
-    image_dir = "./data/wider/images"
-    neg_save_dir = "/data3/seanlx/mtcnn1/24/negative"
-    pos_save_dir = "/data3/seanlx/mtcnn1/24/positive"
-    part_save_dir = "/data3/seanlx/mtcnn1/24/part"
+    base_dir = "/Users/isaiah/Workspace/mtcnn/data/mtcnn/images/"
+    neg_save_dir = base_dir + ("%s/negative" % image_size)
+    pos_save_dir = base_dir + ("%s/positive" % image_size)
+    part_save_dir = base_dir + ("%s/part" % image_size)
 
     # load ground truth from annotation file
     # format of each line: image/path [x1,y1,x2,y2] for each gt_box in this image
     anno_file = './prepare_data/wider_annotations/anno.txt'
     with open(anno_file, 'r') as f:
         annotations = f.readlines()
-
-    if net == "rnet":
-        image_size = 24
-    if net == "onet":
-        image_size = 48
 
     im_idx_list = list()
     gt_boxes_list = list()
@@ -66,7 +65,7 @@ def save_hard_example(net):
 
         if dets.shape[0]==0:
             continue
-        img = cv2.imread(os.path.join(image_dir, im_idx+'.jpg'))
+        img = cv2.imread(im_idx)
         dets = convert_to_square(dets)
         dets[:, 0:4] = np.round(dets[:, 0:4])
 

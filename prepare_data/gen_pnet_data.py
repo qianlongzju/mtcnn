@@ -5,10 +5,11 @@ import numpy.random as npr
 from utils import IoU
 
 anno_file = "./wider_annotations/anno.txt"
-im_dir = "/home/seanlx/Dataset/wider_face/WIDER_train/images"
-neg_save_dir = "/data3/seanlx/mtcnn1/12/negative"
-pos_save_dir = "/data3/seanlx/mtcnn1/12/positive"
-part_save_dir = "/data3/seanlx/mtcnn1/12/part"
+im_dir = "/Users/isaiah/Documents/face/WIDER_train/images"
+base_dir = "/Users/isaiah/Workspace/mtcnn/data/mtcnn/images/12/"
+neg_save_dir = base_dir + "negative"
+pos_save_dir = base_dir + "positive"
+part_save_dir = base_dir + "part"
 
 save_dir = "./pnet"
 if not os.path.exists(save_dir):
@@ -32,7 +33,8 @@ for annotation in annotations:
     im_path = annotation[0]
     bbox = map(float, annotation[1:])
     boxes = np.array(bbox, dtype=np.float32).reshape(-1, 4)
-    img = cv2.imread(os.path.join(im_dir, im_path + '.jpg'))
+    #img = cv2.imread(os.path.join(im_dir, im_path + '.jpg'))
+    img = cv2.imread(im_path)
     idx += 1
     if idx % 100 == 0:
         print idx, "images done"
@@ -84,6 +86,7 @@ for annotation in annotations:
             crop_box = np.array([nx1, ny1, nx1 + size, ny1 + size])
             Iou = IoU(crop_box, boxes)
 
+            ny1, nx1 = int(ny1), int(nx1)
             cropped_im = img[ny1 : ny1 + size, nx1 : nx1 + size, :]
             resized_im = cv2.resize(cropped_im, (12, 12), interpolation=cv2.INTER_LINEAR)
 
@@ -116,6 +119,7 @@ for annotation in annotations:
             offset_x2 = (x2 - nx2) / float(size)
             offset_y2 = (y2 - ny2) / float(size)
 
+            ny1, nx1, ny2, nx2 = int(ny1), int(nx1), int(ny2), int(nx2)
             cropped_im = img[ny1 : ny2, nx1 : nx2, :]
             resized_im = cv2.resize(cropped_im, (12, 12), interpolation=cv2.INTER_LINEAR)
 

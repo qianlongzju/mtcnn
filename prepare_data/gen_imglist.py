@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as npr
 
-size = 12
+size = 48
 
 if size == 12:
     net = "pnet"
@@ -21,9 +21,12 @@ with open('%s/part_%s.txt'%(net, size), 'r') as f:
 
 
 with open("%s/train_%s.txt"%(net, size), "w") as f:
+    print len(pos), len(neg), len(part)
     f.writelines(pos)
-    neg_keep = npr.choice(len(neg), size=600000, replace=False)
-    part_keep = npr.choice(len(part), size=300000, replace=False)
+    #neg_keep = npr.choice(len(neg), size=600000, replace=False)
+    #part_keep = npr.choice(len(part), size=300000, replace=False)
+    neg_keep = npr.choice(len(neg), size=8000, replace=False)
+    part_keep = npr.choice(len(part), size=4000, replace=False)
     for i in neg_keep:
         f.write(neg[i])
     for i in part_keep:

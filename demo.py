@@ -1,5 +1,7 @@
 import numpy as np
 import mxnet as mx
+import os
+import sys
 import argparse
 import cv2
 import time
@@ -12,10 +14,13 @@ from core.fcn_detector import FcnDetector
 from tools.load_model import load_param
 from core.MtcnnDetector import MtcnnDetector
 
+nc_image_dir = "/Users/isaiah/Workspace/real_time_face_recognition/nc_face_images"
+nc_image_dir = "/Users/isaiah/Workspace/real_time_face_recognition/nc_face_images_bak"
+result_dir = "/Users/isaiah/Workspace/real_time_face_recognition/"
 
 def test_net(prefix, epoch, batch_size, ctx,
              thresh=[0.6, 0.6, 0.7], min_face_size=24,
-             stride=2, slide_window=False):
+             stride=2, slide_window=False, photo='test01.jpg'):
 
     detectors = [None, None, None]
 
@@ -40,30 +45,75 @@ def test_net(prefix, epoch, batch_size, ctx,
     mtcnn_detector = MtcnnDetector(detectors=detectors, ctx=ctx, min_face_size=min_face_size,
                                    stride=stride, threshold=thresh, slide_window=slide_window)
 
-    img = cv2.imread('test01.jpg')
+    if os.path.isdir(photo):
+        test_dir(mtcnn_detector, photo)
+    else:
+        test_photo(mtcnn_detector, photo)
+
+def test_photo(detector, photo):
+    img = cv2.imread(photo)
     t1 = time.time()
 
-    boxes, boxes_c = mtcnn_detector.detect_pnet(img)
-    boxes, boxes_c = mtcnn_detector.detect_rnet(img, boxes_c)
-    boxes, boxes_c = mtcnn_detector.detect_onet(img, boxes_c)
+    boxes_c = get_boxes_c(detector, img)
 
     print 'time: ',time.time() - t1
 
     if boxes_c is not None:
-        draw = img.copy()
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        for b in boxes_c:
-            cv2.rectangle(draw, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), (0, 255, 255), 1)
-            cv2.putText(draw, '%.3f'%b[4], (int(b[0]), int(b[1])), font, 0.4, (255, 255, 255), 1)
+        show_boxes_c(img, boxes_c)
 
-        cv2.imshow("detection result", draw)
-        cv2.waitKey(0)
+def test_dir(detector, test_dir):
+    t1 = time.time()
+    count = 0
+    face_count = 0
+    for f in os.listdir(test_dir):
+        count += 1
+        f_name = os.path.join(test_dir, f)
+        #print f_name
+        img = cv2.imread(f_name)
+        boxes_c = get_boxes_c(detector, img)
+        if boxes_c is not None:
+            face_count += 1
+            draw = get_img_with_bbox(img, boxes_c)
+            cv2.imwrite(result_dir + 'result/true_20170818/%s.jpg' % f, draw)
+            #show_boxes_c(img, boxes_c)
+            #break
+        else:
+            #cv2.imwrite(result_dir + 'result/false_20170818/%s.jpg' % f, img)
+            print f
+        #break
+    print 'time: ',time.time() - t1
+    print 'face/total: %s/%s' % (face_count, count)
 
+#@profile
+def get_boxes_c(detector, img):
+    boxes, boxes_c = detector.detect_pnet(img)
+    if boxes_c is None:
+        return None
+    boxes, boxes_c = detector.detect_rnet(img, boxes_c)
+    if boxes_c is None:
+        return None
+    boxes, boxes_c = detector.detect_onet(img, boxes_c)
+    return boxes_c
 
+def get_img_with_bbox(img, boxes_c):
+    draw = img.copy()
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    for b in boxes_c:
+        cv2.rectangle(draw, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), (0, 255, 255), 1)
+        cv2.putText(draw, '%.3f'%b[4], (int(b[0]), int(b[1])), font, 0.4, (255, 255, 255), 1)
+    return draw
+
+def show_boxes_c(img, boxes_c):
+    draw = get_img_with_bbox(img, boxes_c)
+    cv2.imshow("detection result", draw)
+    cv2.waitKey(0)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test mtcnn',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--photo', dest='photo', help='photo name',
+                        default=nc_image_dir, type=str)
+                        #default='test01.jpg', type=str)
     parser.add_argument('--prefix', dest='prefix', help='prefix of model name', nargs="+",
                         default=['model/pnet', 'model/rnet', 'model/onet'], type=str)
     parser.add_argument('--epoch', dest='epoch', help='epoch number of model to load', nargs="+",
@@ -91,4 +141,4 @@ if __name__ == '__main__':
         ctx = mx.cpu(0)
     test_net(args.prefix, args.epoch, args.batch_size,
              ctx, args.thresh, args.min_face,
-             args.stride, args.slide_window)
+             args.stride, args.slide_window, args.photo)
